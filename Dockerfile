@@ -3,6 +3,11 @@ ENV DEBIAN_FRONTEND=noninteractive
 ENV LANG C.UTF-8
 ENV LC_ALL C.UTF-8
 
+RUN echo 'Acquire::Retries "3";' > /etc/apt/apt.conf.d/80retries \
+    && echo 'Acquire::http::Pipeline-Depth "0";' >> /etc/apt/apt.conf.d/80retries \
+    && echo 'Acquire::http::No-Cache "true";' >> /etc/apt/apt.conf.d/80retries \
+    && echo 'Acquire::BrokenProxy "true";' >> /etc/apt/apt.conf.d/80retries
+
 RUN apt-get update \
 && apt-get install -y --no-install-recommends \
  ca-certificates gnupg lsb-release locales \
@@ -17,8 +22,8 @@ RUN apt-get update \
 
 FROM compiler-common AS compiler-stylesheet
 RUN cd ~ \
-&& git clone --single-branch --branch v5.4.0 https://github.com/amish1706/openstreetmap-carto-no-text.git --depth 1 \
-&& cd openstreetmap-carto \
+&& git clone --single-branch --branch master https://github.com/amish1706/openstreetmap-carto-no-text.git --depth 1 \
+&& cd openstreetmap-carto-no-text \
 && sed -i 's/, "unifont Medium", "Unifont Upper Medium"//g' style/fonts.mss \
 && sed -i 's/"Noto Sans Tibetan Regular",//g' style/fonts.mss \
 && sed -i 's/"Noto Sans Tibetan Bold",//g' style/fonts.mss \
@@ -165,7 +170,7 @@ MAXZOOM=20' >> /etc/renderd.conf \
 # Install helper script
 COPY --from=compiler-helper-script /home/renderer/src/regional /home/renderer/src/regional
 
-COPY --from=compiler-stylesheet /root/openstreetmap-carto /home/renderer/src/openstreetmap-carto-backup
+COPY --from=compiler-stylesheet /root/openstreetmap-carto-no-text /home/renderer/src/openstreetmap-carto-backup
 
 # Start running
 COPY run.sh /
